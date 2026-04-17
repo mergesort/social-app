@@ -1,9 +1,7 @@
 import {useCallback, useMemo} from 'react'
 import {View} from 'react-native'
 import {type ModerationDecision} from '@atproto/api'
-import {msg} from '@lingui/core/macro'
-import {useLingui} from '@lingui/react'
-import {Trans} from '@lingui/react/macro'
+import {Trans, useLingui} from '@lingui/react/macro'
 
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {useProfileBlockMutationQueue} from '#/state/queries/profile'
@@ -13,9 +11,10 @@ import {useDialogControl} from '#/components/Dialog'
 import {Divider} from '#/components/Divider'
 import {BlockedByListDialog} from '#/components/dms/BlockedByListDialog'
 import {LeaveConvoPrompt} from '#/components/dms/LeaveConvoPrompt'
-import {ReportConversationPrompt} from '#/components/dms/ReportConversationPrompt'
+import {ReportConversationDialog} from '#/components/dms/ReportConversationDialog'
 import {Text} from '#/components/Typography'
 import type * as bsky from '#/types/bsky'
+import {AfterReportConversationDialog} from './AfterReportConversationDialog'
 
 export function MessagesListBlockedFooter({
   recipient: initialRecipient,
@@ -30,13 +29,14 @@ export function MessagesListBlockedFooter({
 }) {
   const t = useTheme()
   const {gtMobile} = useBreakpoints()
-  const {_} = useLingui()
+  const {t: l} = useLingui()
   const recipient = useProfileShadow(initialRecipient)
-  const [__, queueUnblock] = useProfileBlockMutationQueue(recipient)
+  const [_queueBlock, queueUnblock] = useProfileBlockMutationQueue(recipient)
 
   const leaveConvoControl = useDialogControl()
   const reportControl = useDialogControl()
   const blockedByListControl = useDialogControl()
+  const deleteControl = useDialogControl()
 
   const {listBlocks, userBlock} = useMemo(() => {
     const modui = moderation.ui('profileView')
@@ -55,7 +55,7 @@ export function MessagesListBlockedFooter({
     if (listBlocks.length) {
       blockedByListControl.open()
     } else {
-      queueUnblock()
+      void queueUnblock()
     }
   }, [blockedByListControl, listBlocks, queueUnblock])
 
@@ -69,10 +69,9 @@ export function MessagesListBlockedFooter({
           <Trans>This user has blocked you</Trans>
         )}
       </Text>
-
       <View style={[a.flex_row, a.justify_between, a.gap_lg, a.px_md]}>
         <Button
-          label={_(msg`Leave chat`)}
+          label={l`Leave chat`}
           color="secondary"
           variant="solid"
           size="small"
@@ -83,7 +82,7 @@ export function MessagesListBlockedFooter({
           </ButtonText>
         </Button>
         <Button
-          label={_(msg`Report`)}
+          label={l`Report`}
           color="secondary"
           variant="solid"
           size="small"
@@ -95,7 +94,7 @@ export function MessagesListBlockedFooter({
         </Button>
         {isBlocking && gtMobile && (
           <Button
-            label={_(msg`Unblock`)}
+            label={l`Unblock`}
             color="secondary"
             variant="solid"
             size="small"
@@ -110,7 +109,7 @@ export function MessagesListBlockedFooter({
       {isBlocking && !gtMobile && (
         <View style={[a.flex_row, a.justify_center, a.px_md]}>
           <Button
-            label={_(msg`Unblock`)}
+            label={l`Unblock`}
             color="secondary"
             variant="solid"
             size="small"
@@ -129,7 +128,20 @@ export function MessagesListBlockedFooter({
         convoId={convoId}
       />
 
-      <ReportConversationPrompt control={reportControl} />
+      <ReportConversationDialog
+        control={reportControl}
+        convoId={convoId}
+        did={recipient.did}
+        onAfterSubmit={deleteControl.open}
+      />
+
+      <AfterReportConversationDialog
+        control={deleteControl}
+        currentScreen="conversation"
+        params={{
+          convoId,
+        }}
+      />
 
       <BlockedByListDialog
         control={blockedByListControl}

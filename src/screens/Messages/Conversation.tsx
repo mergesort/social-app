@@ -29,6 +29,7 @@ import {ConvoStatus} from '#/state/messages/convo/types'
 import {useCurrentConvoId} from '#/state/messages/current-convo-id'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useConvoQuery} from '#/state/queries/messages/conversation'
+import {useListJoinRequestsQuery} from '#/state/queries/messages/list-join-requests'
 import {useSession} from '#/state/session'
 import {MessagesList} from '#/screens/Messages/components/MessagesList'
 import {atoms as a, useTheme, web} from '#/alf'
@@ -52,6 +53,7 @@ import {IS_INTERNAL, IS_LIQUID_GLASS} from '#/env'
 import {ChatDisabled} from './components/ChatDisabled'
 import {ChatEnded} from './components/ChatEnded'
 import {ChatLocked} from './components/ChatLocked'
+import {RequestStatus} from './components/RequestStatus'
 
 type Props = NativeStackScreenProps<
   CommonNavigatorParams,
@@ -166,6 +168,7 @@ function Inner({convoId}: {convoId: string}) {
           isActive={isConvoActive(convoState)}
           isDisabled={convoState.status === ConvoStatus.Disabled}
           hasMessages={isConvoActive(convoState) && convoState.items.length > 0}
+          readyToShow={readyToShow}
         />
         {!readyToShow && (
           <View
@@ -195,6 +198,7 @@ function InnerReady({
   isActive,
   isDisabled,
   hasMessages,
+  readyToShow,
 }: {
   hasScrolled: boolean
   setHasScrolled: React.Dispatch<React.SetStateAction<boolean>>
@@ -202,10 +206,13 @@ function InnerReady({
   isActive: boolean
   isDisabled: boolean
   hasMessages: boolean
+  readyToShow: boolean
 }) {
   const navigation = useNavigation<NavigationProp>()
+  const {currentAccount} = useSession()
   const {top: topInset} = useSafeAreaInsets()
   const [headerHeight, setHeaderHeight] = useState(0)
+  const [requestStatusDismissed, setRequestStatusDismissed] = useState(false)
   const onHeaderLayout = (e: LayoutChangeEvent) => {
     setHeaderHeight(e.nativeEvent.layout.height)
   }
@@ -213,6 +220,20 @@ function InnerReady({
     useRoute<RouteProp<CommonNavigatorParams, 'MessagesConversation'>>()
   const {needsEmailVerification} = useEmail()
   const emailDialogControl = useEmailDialogControl()
+
+  const isOwner =
+    convo?.kind === 'group' && convo.primaryMember?.did === currentAccount?.did
+
+  const {data: joinRequestsData, hasNextPage: hasMoreRequests} =
+    useListJoinRequestsQuery({
+      convoId: convo?.view.id,
+      enabled: isOwner,
+    })
+  const requestCount =
+    joinRequestsData?.pages.reduce(
+      (sum, page) => sum + page.requests.length,
+      0,
+    ) ?? 0
 
   /**
    * Must be non-reactive, otherwise the update to open the global dialog will
@@ -291,8 +312,26 @@ function InnerReady({
           {header}
         </ScrollEdgeEffect>
       ) : (
-        header
+        <View onLayout={onHeaderLayout}>{header}</View>
       )}
+
+      {convo?.kind === 'group' &&
+      !requestStatusDismissed &&
+      requestCount > 0 ? (
+        <RequestStatus
+          top={headerHeight}
+          show={readyToShow}
+          count={requestCount}
+          more={!!hasMoreRequests}
+          onDismiss={() => {
+            setRequestStatusDismissed(true)
+          }}
+          onPress={() => {
+            /* TODO Navigate to requests. -dsb */
+          }}
+        />
+      ) : null}
+
       {isActive && (
         <MessagesList
           hasScrolled={hasScrolled}

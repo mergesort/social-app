@@ -140,6 +140,7 @@ export function MessagesListBlockedFooter({
         currentScreen="conversation"
         params={{
           convoId,
+          did: recipient.did,
         }}
       />
 

@@ -565,6 +565,7 @@ function SettingsHeader({
             currentScreen="conversation"
             params={{
               convoId: convo.view.id,
+              did: reportSubjectDid,
             }}
           />
         </>

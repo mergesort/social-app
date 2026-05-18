@@ -74,7 +74,7 @@ jobs:
       - name: pnpm install
         uses: Wandalen/wretry.action@master
         with:
-          command: pnpm --frozen-lockfile
+          command: pnpm install --frozen-lockfile
           attempt_limit: 3
           attempt_delay: 2000
       - name: Check & compile i18n

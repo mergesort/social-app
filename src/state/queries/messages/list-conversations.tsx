@@ -259,7 +259,20 @@ export function ListConvosProviderInner({
               queryClient.setQueriesData({queryKey: RQKEY('request')}, updateFn)
             }
           } else if (ChatBskyConvoDefs.isLogReadMessage(log)) {
+            // Deprecated in favor of ChatBskyConvoDefs.LogReadConvo
             const logRef: ChatBskyConvoDefs.LogReadMessage = log
+            queryClient.setQueriesData(
+              {queryKey: [RQKEY_ROOT]},
+              (old?: ConvoListQueryData) =>
+                optimisticUpdate(logRef.convoId, old, convo => ({
+                  ...convo,
+                  unreadCount: 0,
+                  rev: logRef.rev,
+                })),
+            )
+          } else if (ChatBskyConvoDefs.isLogReadConvo(log)) {
+            // Replaces ChatBskyConvoDefs.LogReadMessage
+            const logRef: ChatBskyConvoDefs.LogReadConvo = log
             queryClient.setQueriesData(
               {queryKey: [RQKEY_ROOT]},
               (old?: ConvoListQueryData) =>
@@ -334,6 +347,87 @@ export function ListConvosProviderInner({
                   rev: logRef.rev,
                 })),
             )
+          } else if (ChatBskyConvoDefs.isLogLockConvo(log)) {
+            const logRef: ChatBskyConvoDefs.LogLockConvo = log
+            queryClient.setQueriesData(
+              {queryKey: [RQKEY_ROOT]},
+              (old?: ConvoListQueryData) =>
+                optimisticUpdate(logRef.convoId, old, convo => {
+                  if (ChatBskyConvoDefs.isGroupConvo(convo.kind)) {
+                    return {
+                      ...convo,
+                      kind: {
+                        ...convo.kind,
+                        lockStatus: 'locked',
+                      },
+                      rev: logRef.rev,
+                    }
+                  }
+                  return {
+                    ...convo,
+                    rev: logRef.rev,
+                  }
+                }),
+            )
+          } else if (ChatBskyConvoDefs.isLogUnlockConvo(log)) {
+            const logRef: ChatBskyConvoDefs.LogUnlockConvo = log
+            queryClient.setQueriesData(
+              {queryKey: [RQKEY_ROOT]},
+              (old?: ConvoListQueryData) =>
+                optimisticUpdate(logRef.convoId, old, convo => {
+                  if (ChatBskyConvoDefs.isGroupConvo(convo.kind)) {
+                    return {
+                      ...convo,
+                      kind: {
+                        ...convo.kind,
+                        lockStatus: 'unlocked',
+                      },
+                      rev: logRef.rev,
+                    }
+                  }
+                  return {
+                    ...convo,
+                    rev: logRef.rev,
+                  }
+                }),
+            )
+          } else if (ChatBskyConvoDefs.isLogLockConvoPermanently(log)) {
+            const logRef: ChatBskyConvoDefs.LogLockConvoPermanently = log
+            queryClient.setQueriesData(
+              {queryKey: [RQKEY_ROOT]},
+              (old?: ConvoListQueryData) =>
+                optimisticUpdate(logRef.convoId, old, convo => {
+                  if (ChatBskyConvoDefs.isGroupConvo(convo.kind)) {
+                    return {
+                      ...convo,
+                      kind: {
+                        ...convo.kind,
+                        lockStatus: 'locked-permanently',
+                      },
+                      rev: logRef.rev,
+                    }
+                  }
+                  return {
+                    ...convo,
+                    rev: logRef.rev,
+                  }
+                }),
+            )
+          } else if (
+            ChatBskyConvoDefs.isLogCreateJoinLink(log) ||
+            ChatBskyConvoDefs.isLogEditJoinLink(log) ||
+            ChatBskyConvoDefs.isLogEnableJoinLink(log) ||
+            ChatBskyConvoDefs.isLogDisableJoinLink(log)
+          ) {
+            // Join link data not included in the log event, trigger refetch to get it
+            debouncedRefetch()
+          } else if (
+            ChatBskyConvoDefs.isLogIncomingJoinRequest(log) ||
+            ChatBskyConvoDefs.isLogApproveJoinRequest(log) ||
+            ChatBskyConvoDefs.isLogRejectJoinRequest(log) ||
+            ChatBskyConvoDefs.isLogOutgoingJoinRequest(log)
+          ) {
+            // TODO Update join request count here when available. -dsb
           } else if (ChatBskyConvoDefs.isLogAddReaction(log)) {
             const logRef: ChatBskyConvoDefs.LogAddReaction = log
             queryClient.setQueriesData(

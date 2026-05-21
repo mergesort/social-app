@@ -1,5 +1,5 @@
 import {AtUri} from '@atproto/api'
-import psl from 'psl'
+import {parse} from 'psl'
 import TLDs from 'tlds'
 
 import {BSKY_SERVICE} from '#/lib/constants'
@@ -178,6 +178,19 @@ export function isBskyStarterPackUrl(url: string): boolean {
   return false
 }
 
+export function isBskyChatInviteUrl(url: string): boolean {
+  if (isBskyAppUrl(url)) {
+    try {
+      const urlp = new URL(url)
+      // 7 characters at the time of implementation. Future-proofing up to 10.
+      return /^\/c\/(?<code>[a-z0-9]{7,10})$/i.test(urlp.pathname)
+    } catch {
+      console.error('Unexpected error in isBskyChatInviteUrl()', url)
+    }
+  }
+  return false
+}
+
 export function isBskyDownloadUrl(url: string): boolean {
   if (isExternalUrl(url)) {
     return false
@@ -306,7 +319,7 @@ export function isPossiblyAUrl(str: string): boolean {
 }
 
 export function splitApexDomain(hostname: string): [string, string] {
-  const hostnamep = psl.parse(hostname)
+  const hostnamep = parse(hostname)
   if (hostnamep.error || !hostnamep.listed || !hostnamep.domain) {
     return ['', hostname]
   }

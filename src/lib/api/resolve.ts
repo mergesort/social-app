@@ -2,11 +2,12 @@ import {
   type AppBskyFeedDefs,
   type AppBskyGraphDefs,
   type BskyAgent,
+  type ChatBskyGroupDefs,
   type ComAtprotoRepoStrongRef,
 } from '@atproto/api'
 import {AtUri} from '@atproto/api'
 
-import {POST_IMG_MAX} from '#/lib/constants'
+import {DM_SERVICE_HEADERS, POST_IMG_MAX} from '#/lib/constants'
 import {getLinkMeta, type LinkMeta} from '#/lib/link-meta/link-meta'
 import {resolveShortLink} from '#/lib/link-meta/resolve-short-link'
 import {downloadAndResize} from '#/lib/media/manip'
@@ -16,6 +17,7 @@ import {
 } from '#/lib/strings/starter-pack'
 import {
   convertBskyAppUrlIfNeeded,
+  isBskyChatInviteUrl,
   isBskyCustomFeedUrl,
   isBskyListUrl,
   isBskyPostUrl,
@@ -70,12 +72,20 @@ type ResolvedStarterPackRecord = {
   view: AppBskyGraphDefs.StarterPackView
 }
 
+type ResolvedChatInvite = {
+  type: 'chat-invite'
+  uri: string
+  code: string
+  view: ChatBskyGroupDefs.JoinLinkPreviewView
+}
+
 export type ResolvedLink =
   | ResolvedExternalLink
   | ResolvedPostRecord
   | ResolvedFeedRecord
   | ResolvedListRecord
   | ResolvedStarterPackRecord
+  | ResolvedChatInvite
 
 export class EmbeddingDisabledError extends Error {
   constructor() {
@@ -138,6 +148,19 @@ export async function resolveLink(
       },
       kind: 'list',
       view: res.data.list,
+    }
+  }
+  if (isBskyChatInviteUrl(uri)) {
+    const code = new URL(uri).pathname.split('/')[2]
+    const res = await agent.chat.bsky.group.getJoinLinkPreview(
+      {code},
+      {headers: DM_SERVICE_HEADERS},
+    )
+    return {
+      type: 'chat-invite',
+      uri,
+      code,
+      view: res.data.joinLinkPreview,
     }
   }
   if (isBskyStartUrl(uri) || isBskyStarterPackUrl(uri)) {

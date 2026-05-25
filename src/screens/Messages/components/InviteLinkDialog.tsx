@@ -168,14 +168,14 @@ export function InviteLinkDialog({
       content = (
         <>
           <View>
-            <Text style={[a.text_md, t.atoms.text]}>
+            <Text style={[a.text_md, a.leading_snug]}>
               <Trans>
                 An invite link lets people join this group chat without being
                 added directly. You control who can use the link and whether
                 they need your approval. You can disable the link at any time.
               </Trans>
             </Text>
-            <Text style={[a.mt_lg, a.text_md, t.atoms.text]}>
+            <Text style={[a.mt_lg, a.text_md, a.leading_snug]}>
               <Trans>
                 Your name, avatar, and the name of the group chat will be
                 visible to everyone.
@@ -300,15 +300,20 @@ export function InviteLinkDialog({
                 style={[
                   a.mr_xs,
                   a.text_md,
-                  enabledStatus === 'disabled'
-                    ? t.atoms.text_contrast_low
-                    : t.atoms.text,
+                  a.leading_snug,
+                  enabledStatus === 'disabled' && t.atoms.text_contrast_low,
                 ]}>
                 {joinLinkURI}
               </Text>
             </CopyTextButton>
             {createdAt ? (
-              <Text style={[a.mt_xs, a.text_xs, t.atoms.text_contrast_medium]}>
+              <Text
+                style={[
+                  a.mt_xs,
+                  a.text_xs,
+                  t.atoms.text_contrast_medium,
+                  a.leading_snug,
+                ]}>
                 <Trans>
                   Created{' '}
                   {i18n.date(createdAt, {
@@ -327,7 +332,7 @@ export function InviteLinkDialog({
                   value={ownerValue}
                   onPress={() => setStep(Step.GENERATE)}>
                   <View style={[a.flex_1, a.mr_xs]}>
-                    <Text numberOfLines={1} style={[a.text_md, t.atoms.text]}>
+                    <Text numberOfLines={1} style={[a.text_md, a.leading_snug]}>
                       {ownerValue}
                     </Text>
                   </View>
@@ -472,7 +477,7 @@ export function InviteLinkDialog({
     content = (
       <>
         <View style={[a.mt_lg]}>
-          <Text style={[a.text_sm, t.atoms.text]}>
+          <Text style={[a.text_sm, a.leading_snug]}>
             <Trans>There is no invite link for this group chat.</Trans>
           </Text>
         </View>
@@ -503,7 +508,7 @@ export function InviteLinkDialog({
         header={
           <View>
             <View style={[IS_WEB ? [a.px_2xl, a.pt_xl] : {paddingTop: 10}]}>
-              <Text style={[a.font_bold, a.text_2xl, a.mb_sm, t.atoms.text]}>
+              <Text style={[a.font_bold, a.text_2xl, a.mb_sm, a.leading_snug]}>
                 {header}
               </Text>
             </View>

@@ -222,7 +222,7 @@ function ActionButtons({
   const isDarkMode = t.name !== 'light'
 
   return (
-    <>
+    <View style={[a.w_full, a.gap_md]}>
       <Button
         testID="signInButton"
         onPress={() => {
@@ -251,6 +251,6 @@ function ActionButtons({
           <Trans>Create account</Trans>
         </ButtonText>
       </Button>
-    </>
+    </View>
   )
 }

@@ -4,6 +4,7 @@ import {moderateProfile} from '@atproto/api'
 import {Trans, useLingui} from '@lingui/react/macro'
 
 import {createSanitizedDisplayName} from '#/lib/moderation/create-sanitized-display-name'
+import {cleanError} from '#/lib/strings/errors'
 import {sanitizeHandle} from '#/lib/strings/handles'
 import {useModerationOpts} from '#/state/preferences/moderation-opts'
 import {useJoinLinkPreviewsQuery} from '#/state/queries/join-links'
@@ -66,7 +67,7 @@ export function JoinRequest({setScreenState}: Props) {
                 ]}>
                 {error.message === 'Invalid join link code'
                   ? l`This invite link has expired`
-                  : error.message}
+                  : cleanError(error.message)}
               </Text>
               <ActionButtons setScreenState={setScreenState} />
             </Wrapper>
